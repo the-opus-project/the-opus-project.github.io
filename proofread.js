@@ -51,6 +51,9 @@ function showScore(score) {
         : `Agent step ${score.step}/3 — not yet reconciled`;
 
   document.querySelector('[data-source-link]').href = score.source_pdf;
+  const scopeNode = document.querySelector('[data-scope]');
+  scopeNode.textContent = score.source_scope ? `Review scope: ${score.source_scope}` : '';
+  scopeNode.hidden = !score.source_scope;
   document.querySelector('[data-source-frame]').src = score.source_pdf;
   document.querySelector('[data-library-link]').href = score.source_page;
   const crosscheck = document.querySelector('[data-crosscheck-link]');

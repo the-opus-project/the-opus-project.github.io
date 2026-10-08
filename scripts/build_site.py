@@ -48,6 +48,7 @@ def review_queue() -> dict[str, object]:
             "pdf_url": str(Path(source_relative).with_suffix(".pdf")),
             "source_page": data["source_page"],
             "source_pdf": data["source_pdf"],
+            "source_scope": data.get("source_scope", ""),
             "crosscheck_name": data["crosscheck_name"],
             "crosscheck_url": data["crosscheck_url"],
             "draft": True,
@@ -95,8 +96,10 @@ def main() -> int:
             page = output / relative
             banner = (f'<p class="review-banner">Unmerged review drafts — awaiting human approval. '
                       f'<a href="{review_url}">Review PR #{args.review_pr}</a></p>')
-            page.write_text(page.read_text(encoding="utf-8").replace("<main>", "<main>\n    " + banner, 1),
-                            encoding="utf-8")
+            html = page.read_text(encoding="utf-8").replace("<main>", "<main>\n    " + banner, 1)
+            html = html.replace("https://github.com/the-opus-project/the-opus-project.github.io/blob/main/",
+                                f"https://github.com/the-opus-project/the-opus-project.github.io/blob/{args.review_revision}/")
+            page.write_text(html, encoding="utf-8")
     (output / "catalog.json").write_text(render_catalog(catalog), encoding="utf-8")
     (output / "reviews.json").write_text(render_catalog(reviews), encoding="utf-8")
 
