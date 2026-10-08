@@ -60,7 +60,7 @@ Before requesting review, compare every page in scope: notes and rests, rhythm, 
 
 ## Reporting and correcting
 
-On a work’s **Compare PDFs** page, compare the printed and rendered scores and report on that page. Give the source PDF page, movement, measure, part or staff, and beat or note position; say what each score shows and identify the transcription revision. If the source lacks measure numbers, use page, system, staff, and position. Attach a crop only when the location is otherwise hard to identify.
+On a work’s **Compare PDFs** page, compare the printed and rendered scores and use its **Report findings on GitHub** link. The form includes the source and exact LilyPond digest. Give the source PDF page, movement, measure, part or staff, and beat or note position; say what each score shows and identify the transcription revision. If the source lacks measure numbers, use page, system, staff, and position. Attach a crop only when the location is otherwise hard to identify.
 
 Example: “Source PDF page 8, movement II, measure 37, violin II, beat 2: the source prints C-sharp; revision abc123 renders C-natural.”
 

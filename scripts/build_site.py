@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import shutil
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -18,6 +19,7 @@ PUBLIC_FILES = (
     "styles.css",
     "app.js",
     "proofread.js",
+    "favicon.svg",
     "LICENSE",
 )
 
@@ -47,6 +49,8 @@ def review_queue() -> dict[str, object]:
             "crosscheck_name": data["crosscheck_name"],
             "crosscheck_url": data["crosscheck_url"],
             "draft": True,
+            "source_sha256": data["source_sha256"],
+            "lilypond_sha256": hashlib.sha256((ROOT / source_relative).read_bytes()).hexdigest(),
         })
     return {"schema": 1, "scores": entries}
 
@@ -80,6 +84,10 @@ def main() -> int:
         deployed_source = output / source_relative
         deployed_source.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
         shutil.copy2(source, deployed_source)
+        for record in ("metadata.json", "SOURCE_CHECK.md", "REVIEW-01.md", "REVIEW-02.md", "RECONCILIATION.md"):
+            record_source = source.parent.parent / record if source.parent.name == "attempts" else source.parent / record
+            if record_source.is_file():
+                shutil.copy2(record_source, output / "pieces" / str(entry["slug"]) / record)
         output_base = (output / Path(str(entry["pdf_url"]))).with_suffix("")
         result = subprocess.run(
             [

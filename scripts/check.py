@@ -132,6 +132,8 @@ def expected_catalog() -> tuple[dict[str, object], list[Path]]:
                 "source_pdf": data["source_pdf"],
                 "crosscheck_name": data["crosscheck_name"],
                 "crosscheck_url": data["crosscheck_url"],
+                "source_sha256": data["source_sha256"],
+                "lilypond_sha256": hashlib.sha256(current_source.read_bytes()).hexdigest(),
             }
         )
     entries.sort(
