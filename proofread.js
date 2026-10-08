@@ -29,7 +29,7 @@ function showQueue(reviews) {
     const item = document.createElement('li');
     const link = document.createElement('a');
     link.href = `proofread.html?piece=${encodeURIComponent(score.slug)}`;
-    link.textContent = `${score.composer} — ${score.title} (${score.catalogue})${score.draft ? ' — withdrawn draft' : ''}`;
+    link.textContent = `${score.composer} — ${score.title} (${score.catalogue})${score.withdrawn ? ' — withdrawn draft' : score.draft ? ' — unmerged review draft' : ''}`;
     item.append(link);
     queue.append(item);
   }
@@ -40,8 +40,10 @@ function showQueue(reviews) {
 function showScore(score) {
   titleNode.textContent = `${score.composer} — ${score.title}`;
   document.title = `${score.title} — Proofread — The OPUS Project`;
-  statusNode.textContent = score.draft
-    ? 'Draft candidate — not in the catalog or human verified'
+  statusNode.textContent = score.withdrawn
+    ? 'Withdrawn draft — needs correction and human proofreading'
+    : score.draft
+      ? 'Unmerged review draft — needs human proofreading'
     : score.verified_by
       ? `Human verified by @${score.verified_by}`
       : score.step === 3
@@ -73,7 +75,7 @@ function showScore(score) {
     : '';
 
   const reportTitle = `Proofreading: ${score.composer} — ${score.title}`;
-  const reportBody = `Work: ${score.composer} — ${score.title}\nResult: [no errors found / corrections needed]\nPages and measures checked:\nLilyPond SHA-256 checked: ${score.lilypond_sha256 || '[enter revision]'}\nDetails:\nSource PDF: ${score.source_pdf}\nSource PDF SHA-256: ${score.source_sha256 || '[enter source digest]'}\nRendered PDF: ${new URL(score.pdf_url, window.location.href).href}`;
+  const reportBody = `Work: ${score.composer} — ${score.title}\nResult: [no errors found / corrections needed]\nPages and measures checked:\nLilyPond SHA-256 checked: ${score.lilypond_sha256 || '[enter revision]'}\n${score.review_url ? `Review PR: ${score.review_url}\nReview commit: ${score.review_revision}\n` : ''}Details:\nSource PDF: ${score.source_pdf}\nSource PDF SHA-256: ${score.source_sha256 || '[enter source digest]'}\nRendered PDF: ${new URL(score.pdf_url, window.location.href).href}`;
   const params = new URLSearchParams({category: 'general', title: reportTitle, body: reportBody});
   document.querySelector('[data-feedback]').href = `https://github.com/the-opus-project/the-opus-project.github.io/discussions/new?${params}`;
 
