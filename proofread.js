@@ -75,7 +75,7 @@ function showScore(score) {
   const reportTitle = `Proofreading: ${score.composer} — ${score.title}`;
   const reportBody = `Work: ${score.composer} — ${score.title}\nResult: [no errors found / corrections needed]\nPages and measures checked:\nLilyPond SHA-256 checked: ${score.lilypond_sha256 || '[enter revision]'}\nDetails:\nSource PDF: ${score.source_pdf}\nSource PDF SHA-256: ${score.source_sha256 || '[enter source digest]'}\nRendered PDF: ${new URL(score.pdf_url, window.location.href).href}`;
   const params = new URLSearchParams({category: 'general', title: reportTitle, body: reportBody});
-  document.querySelector('[data-feedback]').href = `https://github.com/dhruv9saini/the-opus-project/discussions/new?${params}`;
+  document.querySelector('[data-feedback]').href = `https://github.com/the-opus-project/the-opus-project.github.io/discussions/new?${params}`;
 
   document.querySelector('[data-compare]').hidden = false;
   document.querySelector('[data-report]').hidden = false;
