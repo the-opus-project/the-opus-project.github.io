@@ -11,7 +11,7 @@ import sys
 
 def changed_paths(base: str, head: str) -> list[str]:
     result = subprocess.run(
-        ["git", "diff", "--name-only", "--diff-filter=ACMRT", base, head, "--", "pieces"],
+        ["git", "diff", "--name-only", "--diff-filter=ACMRT", f"{base}...{head}", "--", "pieces"],
         capture_output=True,
         text=True,
         timeout=30,
