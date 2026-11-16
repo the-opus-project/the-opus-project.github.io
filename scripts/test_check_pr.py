@@ -61,6 +61,10 @@ def main() -> int:
         assert check(repo, base, score_head, "Review: human\nProofreader: @github-username\nSource: https://example.invalid/source.pdf\n") == 1
         docs_head = commit(repo, "README.md", "fixture updated\n", "docs")
         assert check(repo, score_head, docs_head, "") == 0
+        main_head = commit(repo, "pieces/work/attempts/01.ly", "\\version \"2.26.1\"\n", "proofread")
+        assert run("git", "checkout", "--quiet", "-b", "behind", docs_head, cwd=repo).returncode == 0
+        behind_head = commit(repo, "docs/notes.md", "notes\n", "docs behind main")
+        assert check(repo, main_head, behind_head, "") == 0
     print("check_pr fixtures: agent=pass human=pass negative=pass non_score=pass")
     return 0
 
