@@ -4,8 +4,14 @@ OPUS@Home is a menu bar app that contributes to The OPUS Project with your own C
 
 ## Install
 
-1. Download `OPUS-at-Home.zip` from the [latest build](https://github.com/the-opus-project/the-opus-project.github.io/releases/tag/opus-at-home-latest) and unzip it.
-2. Move **OPUS@Home** to Applications and open it. The app is not notarized yet, so macOS blocks the first launch. Open **System Settings > Privacy & Security** and click **Open Anyway**. Or run `xattr -dr com.apple.quarantine "/Applications/OPUS@Home.app"`.
+1. Open Terminal and run:
+
+   ```sh
+   curl -fsSL https://the-opus-project.github.io/mac/install.sh | sh
+   ```
+
+   This downloads the [latest build](https://github.com/the-opus-project/the-opus-project.github.io/releases/tag/opus-at-home-latest), puts **OPUS@Home** in Applications and opens it. Run it again to update.
+2. Or install by hand: download `OPUS-at-Home.zip` from the latest build, unzip it and move **OPUS@Home** to Applications. The app is not notarized yet, so macOS blocks the first launch of a browser download. Open **System Settings > Privacy & Security** and click **Open Anyway**.
 3. Click the music note in the menu bar. Under **Setup needed**, copy and run each command it lists:
    - Git and Python: `xcode-select --install`
    - GitHub CLI: `brew install gh && gh auth login`

@@ -200,6 +200,7 @@ class ContributorBuild(unittest.TestCase):
     def test_real_runtime_dependency_graph_survives_nested_hosting(self):
         build_site.copy_contributor_assets(self.output)
         for relative in build_site.PUBLIC_FILES:
+            (self.output / relative).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(build_site.ROOT / relative, self.output / relative)
         for relative in ("catalog.json", "reviews.json"):
             (self.output / relative).write_text('{"scores": []}', encoding="utf-8")
