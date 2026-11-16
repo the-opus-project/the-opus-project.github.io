@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "mac/**"
+      - "scripts/build_site.py"
       - ".github/workflows/opus-at-home.yml"
   push:
     branches: [main]
     paths:
       - "mac/**"
+      - "scripts/build_site.py"
       - ".github/workflows/opus-at-home.yml"
   workflow_dispatch:
 
@@ -54,6 +56,15 @@ jobs:
         run: mac/build.sh
       - name: Smoke test
         run: '"mac/dist/OPUS@Home.app/Contents/MacOS/OPUSAtHome" --help'
+      - name: Test the install script
+        run: |
+          OPUS_AT_HOME_URL="file://$PWD/mac/dist/OPUS-at-Home.zip" sh mac/install.sh
+          test -x "/Applications/OPUS@Home.app/Contents/MacOS/OPUSAtHome"
+          ! xattr "/Applications/OPUS@Home.app" | grep -q quarantine
+          sleep 10
+          pgrep -x OPUSAtHome
+          pkill -x OPUSAtHome
+          sleep 2
       - name: Screenshot the menu and settings
         run: |
           mkdir -p mac/dist/screens

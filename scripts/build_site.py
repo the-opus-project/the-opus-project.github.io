@@ -22,6 +22,7 @@ PUBLIC_FILES = (
     "app.js",
     "proofread.js",
     "LICENSE",
+    "mac/install.sh",
 )
 
 CONTRIBUTOR_FILES = ("index.html", "style.css", "app.js", "work-links.mjs")
@@ -202,6 +203,7 @@ def main() -> int:
 
     output.mkdir(mode=0o755)
     for relative in PUBLIC_FILES:
+        (output / relative).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / relative, output / relative)
     copy_contributor_assets(output)
     copy_reviewer_assets(output)
