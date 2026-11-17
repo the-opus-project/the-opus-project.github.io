@@ -18,7 +18,7 @@ menu() {
   osascript -e 'tell application "System Events" to tell process "OPUSAtHome" to click menu bar item 1 of menu bar 2' >/dev/null 2>&1
   sleep 3
   shot "$1"
-  osascript -e 'tell application "System Events" to key code 53' >/dev/null 2>&1
+  osascript -e 'tell application "System Events" to tell process "OPUSAtHome" to click menu bar item 1 of menu bar 2' >/dev/null 2>&1
   sleep 1
 }
 settings_shots() {
