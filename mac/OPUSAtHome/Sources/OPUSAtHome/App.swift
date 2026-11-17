@@ -92,6 +92,7 @@ struct MenuContent: View {
                     Button("Run one now") { c.runNow() }.disabled(!c.missingRequired.isEmpty)
                 }
                 Spacer()
+                Button("Folder") { c.openFolder() }
                 Button("Log") { c.openLatestLog() }
             }
 
@@ -155,8 +156,8 @@ struct SettingsView: View {
                     Stepper("Start \(c.settings.leftoverHours) h before the weekly reset", value: $c.settings.leftoverHours, in: 1...96)
                 } else {
                     Stepper("Stop at \(c.settings.weeklyCapPercent)% of the weekly limit", value: $c.settings.weeklyCapPercent, in: 5...100, step: 5)
+                    Stepper("Pause at \(c.settings.fiveHourCapPercent)% of the 5-hour limit", value: $c.settings.fiveHourCapPercent, in: 10...100, step: 5)
                 }
-                Stepper("Pause at \(c.settings.fiveHourCapPercent)% of the 5-hour limit", value: $c.settings.fiveHourCapPercent, in: 10...100, step: 5)
                 if let u = c.usage {
                     Text("Now: \(u.summary())").font(.caption).foregroundStyle(.secondary)
                 }

@@ -27,11 +27,13 @@ All conditions can be changed in **Settings**:
 
 - **Only while charging** (on by default). If you unplug, the current run stops and its partial work is discarded.
 - **Only after N minutes idle** (off by default).
-- **Usage limits.** By default it uses only quota that would otherwise go unused: it starts within 24 hours of your weekly reset and stops when the weekly limit runs out. Alternatively, it can run any time up to a weekly cap you choose, such as 50%. In both modes it pauses when the 5-hour limit reaches 90%.
+- **Usage limits.** By default it uses only quota that would otherwise go unused: it starts only in the last 5 hours before your weekly reset and keeps starting new runs, one pull request each, until the weekly or 5-hour limit reaches 98%. Alternatively, it can run any time up to a weekly cap you choose, such as 50%, and pause when the 5-hour limit reaches its own cap (90% by default).
 
 It reads your remaining usage from Codex (`codex app-server`) or from Claude Code's sign-in, and checks again every 5 minutes during a run. A run stops when weekly usage reaches 98% (or your cap in "any time" mode), when the 5-hour limit reaches its cap, or when the agent reports its limit is reached. That way it never moves on to paid Codex credits or extra usage. Usage-based API keys report no weekly limit, so use the "any time" mode with them.
 
-Each run has a time limit (120 minutes by default). While a run is active, the Mac does not go to sleep.
+Nothing runs past a weekly reset: a run ends 2 minutes before the reset, and no run starts in the last 15 minutes. Each run also has a time limit (120 minutes by default). After a run that produced no pull request, it waits 10 minutes before trying again. While a run is active, the Mac does not go to sleep.
+
+Everything OPUS@Home keeps is in one folder, `~/Library/Application Support/OPUS@Home` (the **Folder** button opens it): `repo` (its clone), `work` (scans, rendered PDFs and other scratch files, emptied before each run), `logs`, `settings.json` and `history.json`. Codex and Claude Code still keep their own session transcripts in their usual places.
 
 ## What a run does
 

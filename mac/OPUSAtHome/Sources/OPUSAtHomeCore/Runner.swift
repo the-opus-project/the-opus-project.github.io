@@ -50,9 +50,11 @@ public enum Prerequisites {
 public struct RunOptions {
     public var openPullRequest: Bool
     public var maxMinutes: Int
-    public init(openPullRequest: Bool, maxMinutes: Int) {
+    public var deadline: Date?
+    public init(openPullRequest: Bool, maxMinutes: Int, deadline: Date? = nil) {
         self.openPullRequest = openPullRequest
         self.maxMinutes = maxMinutes
+        self.deadline = deadline
     }
 }
 
@@ -77,6 +79,7 @@ public final class ContributionRunner {
     }
 
     var repo: URL { store.repoURL }
+    var work: URL { store.workURL }
 
     func say(_ s: String) {
         let line = "[opus-at-home \(ISO8601DateFormatter().string(from: Date()))] \(s)\n"
@@ -110,7 +113,7 @@ public final class ContributionRunner {
                 try? resetRepo()
                 return record
             }
-            if timedOut { say("Time limit of \(options.maxMinutes) min reached") }
+            if timedOut { say("Time limit reached") }
             say("\(settings.agent.displayName) exited with status \(status)")
             let result = try finish()
             record.outcome = result.outcome
@@ -143,6 +146,8 @@ public final class ContributionRunner {
         try git(["checkout", "--force", "--detach", "origin/main"])
         try git(["reset", "--hard", "origin/main"])
         try git(["clean", "-fdx", "--quiet"])
+        try? FileManager.default.removeItem(at: work)
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
     }
 
     func excludedPieces() -> Set<String> {
@@ -198,14 +203,14 @@ public final class ContributionRunner {
         return """
         You are running unattended from OPUS@Home, a background app on a volunteer's Mac. Nobody is watching and nobody can answer questions, so never ask for input; decide and keep working.
 
-        Contribute exactly one bounded piece of work to The OPUS Project. Read AGENTS.md and HANDBOOK.md in this repository and follow them as if the contributor had said "help The OPUS Project". Do the full required self-review: render your LilyPond and compare it with the printed scan bar by bar before you finish.
+        Contribute one piece of work to The OPUS Project. OPUS@Home starts a new run after this one, so finish this contribution well instead of starting several. Read AGENTS.md and HANDBOOK.md in this repository and follow them as if the contributor had said "help The OPUS Project". Do the full required self-review: render your LilyPond and compare it with the printed scan bar by bar before you finish.
 
         Do not work on these pieces, because another pull request is already open for them or this contributor already worked on them, and steps 1, 2 and 3 must come from different contributors: \(skip.isEmpty ? "(none)" : skip.sorted().joined(separator: ", ")).
 
         Use only a clearly printed, engraved public-domain edition. Handwritten manuscripts, autographs and facsimiles of notebooks (for example the 1725 Anna Magdalena Bach notebook) are not allowed; if a wanted work has no printed edition you can verify, choose another work.
 
         Practical notes for this machine:
-        - LilyPond is at \(lily). Keep scans and rendered PDFs outside the repository (for example in $TMPDIR) and never commit them.
+        - LilyPond is at \(lily). Put every scan, rendered PDF and other scratch file in \(work.path) and nowhere else; never put them in the repository. That folder is emptied before each run.
         - \(docker ? "Docker is running, so run `python3 scripts/check.py --write` at the end and fix every failure." : "Docker is not available, so `scripts/check.py` cannot run here. Compile with the LilyPond above instead; OPUS@Home regenerates catalog.json and GitHub runs the full check.")
         - Pull requests contain only scores: change only LilyPond files and metadata.json under pieces/ (and wanted.txt if you take a work from it). Do not add Markdown, review notes or other prose files, and do not edit documentation, scripts, workflows or website files. Put your review notes in your final message instead.
         - Do not run git commit, git push or gh. OPUS@Home commits your changes and opens the pull request.
@@ -225,18 +230,26 @@ public final class ContributionRunner {
         switch settings.agent {
         case .codex:
             args = ["exec", "--sandbox", "workspace-write", "-c", "sandbox_workspace_write.network_access=true",
-                    "--color", "never", "-C", repo.path]
+                    "--color", "never", "-C", repo.path, "--add-dir", work.path]
             if !settings.model.isEmpty { args += ["-m", settings.model] }
             args.append(prompt)
         case .claude:
-            args = ["-p", prompt, "--permission-mode", "bypassPermissions", "--output-format", "text"]
+            args = ["-p", prompt, "--permission-mode", "bypassPermissions", "--output-format", "text", "--add-dir", work.path]
             if !settings.model.isEmpty { args += ["--model", settings.model] }
         }
         var env = tools.environment
         env["OPUS_AT_HOME"] = "1"
+        env["TMPDIR"] = work.path + "/"
         log?.seekToEndOfFile()
         let proc = try SpawnedProcess(executable: exe, arguments: args, cwd: repo.path, environment: env, logPath: logURL.path)
-        let r = proc.wait(timeout: TimeInterval(max(10, options.maxMinutes) * 60), shouldStop: shouldStop)
+        var limit = TimeInterval(max(10, options.maxMinutes) * 60)
+        if let d = options.deadline {
+            let left = d.timeIntervalSinceNow
+            if left <= 0 { throw RunError("the weekly reset is too close") }
+            limit = min(limit, left)
+            say("Stopping by \(ISO8601DateFormatter().string(from: d)), before the weekly reset")
+        }
+        let r = proc.wait(timeout: limit, shouldStop: shouldStop)
         kill(-proc.pid, SIGKILL)
         return r
     }

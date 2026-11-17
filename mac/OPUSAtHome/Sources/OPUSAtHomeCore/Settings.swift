@@ -42,7 +42,7 @@ public struct AppSettings: Codable, Equatable {
     public var requireCharging = true
     public var idleMinutes = 0
     public var quotaMode: QuotaMode = .leftover
-    public var leftoverHours = 24
+    public var leftoverHours = 5
     public var weeklyCapPercent = 50
     public var fiveHourCapPercent = 90
     public var maxRunMinutes = 120
@@ -92,6 +92,7 @@ public final class DataStore {
     public var historyURL: URL { directory.appendingPathComponent("history.json") }
     public var repoURL: URL { directory.appendingPathComponent("repo") }
     public var logsURL: URL { directory.appendingPathComponent("logs") }
+    public var workURL: URL { directory.appendingPathComponent("work") }
 
     public init(directory: URL? = nil) {
         if let directory {

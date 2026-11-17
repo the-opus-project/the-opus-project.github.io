@@ -136,8 +136,11 @@ public enum Policy {
             return Decision(run: true, reason: "Usage unknown; running")
         }
         if u.blocked { return Decision(run: false, reason: "\(s.agent.displayName) usage limit reached") }
-        if let f = u.fiveHour, f.usedPercent >= Double(s.fiveHourCapPercent) {
+        if let f = u.fiveHour, f.usedPercent >= fiveHourCap(s) {
             return Decision(run: false, reason: "5-hour usage at \(Int(f.usedPercent))%, waiting for it to reset")
+        }
+        if let reset = u.weekly?.resetsAt, reset.timeIntervalSince(now) < minimumStartSeconds {
+            return Decision(run: false, reason: "Too close to the weekly reset to start a run")
         }
         guard let w = u.weekly else {
             if s.quotaMode == .leftover { return Decision(run: false, reason: "Weekly reset time unknown") }
@@ -161,11 +164,21 @@ public enum Policy {
     }
 
     public static let leftoverStopPercent = 98.0
+    public static let minimumStartSeconds = 15.0 * 60
+    public static let resetMarginSeconds = 2.0 * 60
+
+    public static func fiveHourCap(_ s: AppSettings) -> Double {
+        s.quotaMode == .leftover ? leftoverStopPercent : Double(s.fiveHourCapPercent)
+    }
+
+    public static func deadline(_ usage: Usage?) -> Date? {
+        usage?.weekly?.resetsAt?.addingTimeInterval(-resetMarginSeconds)
+    }
 
     public static func stopReason(_ s: AppSettings, _ usage: Usage?) -> String? {
         guard let u = usage else { return nil }
         if u.blocked { return "\(s.agent.displayName) usage limit reached" }
-        if let f = u.fiveHour, f.usedPercent >= Double(s.fiveHourCapPercent) {
+        if let f = u.fiveHour, f.usedPercent >= fiveHourCap(s) {
             return "5-hour usage reached \(Int(f.usedPercent))%"
         }
         if let w = u.weekly {
