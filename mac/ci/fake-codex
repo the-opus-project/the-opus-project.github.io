@@ -1,0 +1,21 @@
+#!/bin/sh
+state="${FAKE_CODEX_STATE:?}"
+case "$1" in
+app-server)
+  while IFS= read -r line; do
+    case "$line" in
+      *'"id":1'*) printf '{"jsonrpc":"2.0","id":1,"result":{}}\n' ;;
+      *'"id":2'*) printf '{"jsonrpc":"2.0","id":2,"result":{"rateLimits":%s}}\n' "$(cat "$state/limits.json")"; exit 0 ;;
+    esac
+  done
+  ;;
+exec)
+  echo "fake codex exec in $PWD" >> "$state/exec.log"
+  echo "TMPDIR=$TMPDIR" >> "$state/exec.log"
+  echo scratch > "$TMPDIR/scan.pdf"
+  sleep "${FAKE_CODEX_SECONDS:-90}"
+  ;;
+*)
+  echo "fake codex 0.0.0"
+  ;;
+esac

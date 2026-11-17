@@ -15,8 +15,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var previewWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard ProcessInfo.processInfo.environment["OPUS_AT_HOME_PREVIEW"] == "1" else { return }
+        let mode = ProcessInfo.processInfo.environment["OPUS_AT_HOME_PREVIEW"]
+        guard mode == "1" || mode == "settings" else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if mode == "settings" {
+                SettingsWindow.show()
+                return
+            }
             let w = NSWindow(contentRect: NSRect(x: 80, y: 200, width: 340, height: 420),
                              styleMask: [.titled], backing: .buffered, defer: false)
             w.title = "Menu preview"
