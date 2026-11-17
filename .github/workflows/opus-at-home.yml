@@ -66,19 +66,9 @@ jobs:
           pkill -x OPUSAtHome
           sleep 2
       - name: Screenshot the menu and settings
-        run: |
-          mkdir -p mac/dist/screens
-          OPUS_AT_HOME_PREVIEW=1 "mac/dist/OPUS@Home.app/Contents/MacOS/OPUSAtHome" &
-          sleep 15
-          screencapture -x mac/dist/screens/preview.png || true
-          kill %1 || true
-          sleep 2
-          "mac/dist/OPUS@Home.app/Contents/MacOS/OPUSAtHome" &
-          sleep 10
-          osascript -e 'tell application "System Events" to tell process "OPUSAtHome" to click menu bar item 1 of menu bar 2' || true
-          sleep 3
-          screencapture -x mac/dist/screens/menubar-click.png || true
-          kill %1 || true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: mac/ci/screenshots.sh
       - uses: actions/upload-artifact@v4
         with:
           name: OPUS-at-Home

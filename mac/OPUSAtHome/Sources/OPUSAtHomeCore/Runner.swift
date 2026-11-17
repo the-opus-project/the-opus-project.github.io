@@ -247,7 +247,10 @@ public final class ContributionRunner {
             let left = d.timeIntervalSinceNow
             if left <= 0 { throw RunError("the weekly reset is too close") }
             limit = min(limit, left)
-            say("Stopping by \(ISO8601DateFormatter().string(from: d)), before the weekly reset")
+            let f = DateFormatter()
+            f.dateStyle = .none
+            f.timeStyle = .short
+            say("\(settings.agent.displayName) is working; it stops by \(f.string(from: d)), before the weekly reset")
         }
         let r = proc.wait(timeout: limit, shouldStop: shouldStop)
         kill(-proc.pid, SIGKILL)
