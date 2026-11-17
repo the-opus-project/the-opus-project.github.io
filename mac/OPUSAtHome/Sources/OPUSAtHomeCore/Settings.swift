@@ -42,7 +42,7 @@ public struct AppSettings: Codable, Equatable {
     public var requireCharging = true
     public var idleMinutes = 0
     public var quotaMode: QuotaMode = .leftover
-    public var leftoverHours = 24
+    public var leftoverHours = 5
     public var weeklyCapPercent = 50
     public var fiveHourCapPercent = 90
     public var maxRunMinutes = 120
