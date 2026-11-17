@@ -92,6 +92,7 @@ public final class DataStore {
     public var historyURL: URL { directory.appendingPathComponent("history.json") }
     public var repoURL: URL { directory.appendingPathComponent("repo") }
     public var logsURL: URL { directory.appendingPathComponent("logs") }
+    public var workURL: URL { directory.appendingPathComponent("work") }
 
     public init(directory: URL? = nil) {
         if let directory {

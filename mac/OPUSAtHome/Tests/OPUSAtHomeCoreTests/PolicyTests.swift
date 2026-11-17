@@ -39,7 +39,9 @@ final class PolicyTests: XCTestCase {
         XCTAssertFalse(Policy.decide(s, Conditions(onCharger: true, idleSeconds: 0, usage: usage(resetIn: 6), now: now)).run)
         XCTAssertFalse(Policy.decide(s, Conditions(onCharger: true, idleSeconds: 0, usage: usage(week: 100, resetIn: 5), now: now)).run)
         XCTAssertFalse(Policy.decide(s, Conditions(onCharger: true, idleSeconds: 0, usage: nil, now: now)).run)
-        XCTAssertFalse(Policy.decide(s, Conditions(onCharger: true, idleSeconds: 0, usage: usage(five: 95), now: now)).run)
+        XCTAssertFalse(Policy.decide(s, Conditions(onCharger: true, idleSeconds: 0, usage: usage(five: 99), now: now)).run)
+        XCTAssertFalse(Policy.decide(s, Conditions(onCharger: true, idleSeconds: 0, usage: usage(resetIn: 0.2), now: now)).run)
+        XCTAssertTrue(Policy.decide(s, Conditions(onCharger: true, idleSeconds: 0, usage: usage(five: 95), now: now)).run)
     }
 
     func testAnytime() {
@@ -53,7 +55,9 @@ final class PolicyTests: XCTestCase {
         let leftover = settings(.leftover)
         XCTAssertNil(Policy.stopReason(leftover, usage(week: 97)))
         XCTAssertNotNil(Policy.stopReason(leftover, usage(week: 98)))
-        XCTAssertNotNil(Policy.stopReason(leftover, usage(five: 95)))
+        XCTAssertNil(Policy.stopReason(leftover, usage(five: 95)))
+        XCTAssertNotNil(Policy.stopReason(leftover, usage(five: 98)))
+        XCTAssertNotNil(Policy.stopReason(settings(.anytime), usage(five: 90)))
         XCTAssertNotNil(Policy.stopReason(settings(.anytime), usage(week: 50)))
         XCTAssertNil(Policy.stopReason(leftover, nil))
         var blocked = usage()
@@ -61,6 +65,11 @@ final class PolicyTests: XCTestCase {
         XCTAssertNotNil(Policy.stopReason(leftover, blocked))
         let weeklyOnly = Usage(fiveHour: nil, weekly: UsageWindow(usedPercent: 12, resetsAt: now.addingTimeInterval(3600)))
         XCTAssertTrue(Policy.decide(leftover, Conditions(onCharger: true, idleSeconds: 0, usage: weeklyOnly, now: now)).run)
+    }
+
+    func testDeadline() {
+        XCTAssertEqual(Policy.deadline(usage(resetIn: 1)), now.addingTimeInterval(3600 - Policy.resetMarginSeconds))
+        XCTAssertNil(Policy.deadline(nil))
     }
 
     func testBackoff() {

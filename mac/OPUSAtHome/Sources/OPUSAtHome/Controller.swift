@@ -165,7 +165,8 @@ final class Controller: ObservableObject {
         status = "Running: Starting"
         sleepAssertion.hold("OPUS@Home is transcribing a score")
         let runner = ContributionRunner(store: store, tools: tools, settings: settings,
-                                        options: RunOptions(openPullRequest: settings.openPullRequests, maxMinutes: settings.maxRunMinutes))
+                                        options: RunOptions(openPullRequest: settings.openPullRequests, maxMinutes: settings.maxRunMinutes,
+                                                            deadline: Policy.deadline(usage)))
         runner.onStatus = { [weak self] s in
             Task { @MainActor in
                 self?.runStatus = s
@@ -186,15 +187,8 @@ final class Controller: ObservableObject {
         sleepAssertion.release()
         store.append(record)
         history = store.loadHistory()
-        if record.pullRequestURL != nil {
-            backoffUntil = nil
-        } else if record.outcome == "Stopped" {
-            backoffUntil = nil
-        } else if record.outcome.hasPrefix("No contribution") {
-            backoffUntil = Date().addingTimeInterval(2 * 3600)
-        } else {
-            backoffUntil = Date().addingTimeInterval(30 * 60)
-        }
+        let retryNow = record.pullRequestURL != nil || record.outcome == "Stopped"
+        backoffUntil = retryNow ? nil : Date().addingTimeInterval(10 * 60)
         usage = nil
         usageCheckedAt = nil
         evaluate()
@@ -207,6 +201,10 @@ final class Controller: ObservableObject {
             NSLog("OPUS@Home login item: \(error)")
         }
         launchAtLogin = SMAppService.mainApp.status == .enabled
+    }
+
+    func openFolder() {
+        NSWorkspace.shared.open(store.directory)
     }
 
     func openLatestLog() {
