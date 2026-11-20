@@ -79,9 +79,13 @@ export PATH="/usr/local/bin:$PATH"
 sudo install -m 755 "$root/mac/ci/fake-claude" /usr/local/bin/claude
 start
 menu 09-claude-setup keep-open
-osascript -l JavaScript "$root/mac/ci/click-setup-button.js" "Copy setup prompt"
-test "$(pbpaste)" = "$(cat "$state/setup-prompt")"
-osascript -l JavaScript "$root/mac/ci/click-setup-button.js" "Run setup…"
+click="$RUNNER_TEMP/click-setup-button"
+swiftc -O -o "$click" "$root/mac/ci/click-setup-button.swift"
+"$click" "$out/09-claude-setup.png" "Copy setup prompt"
+pbpaste > "$state/copied-prompt"
+test "$(cat "$state/copied-prompt")" = "$(cat "$state/setup-prompt")" || { diff -u "$state/setup-prompt" "$state/copied-prompt"; exit 1; }
+screencapture -x "$state/after-copy.png"
+"$click" "$state/after-copy.png" "Run setup"
 for attempt in $(seq 1 60); do
   test -f "$FAKE_CLAUDE_STATE/signed-in" && break
   sleep 1
