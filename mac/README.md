@@ -20,7 +20,11 @@ macOS 14 or later is required.
 
 ## Screenshots
 
-These screenshots were captured on a macOS runner with simulated agent sign-in and usage.
+The menu offers both setup actions whenever a required tool or sign-in is missing.
+
+![Claude Code selected with Run setup and Copy setup prompt in the menu bar](screenshots/09-claude-setup.png)
+
+The gallery shows the app on macOS with simulated agent sign-in and usage.
 
 | Menu bar | Settings |
 | --- | --- |
