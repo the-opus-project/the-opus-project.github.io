@@ -65,7 +65,7 @@ echo "--- history"; cat "$data/history.json" 2>/dev/null
 echo "--- latest run log"; cat "$(ls -t "$data"/logs/*.log 2>/dev/null | head -1)" 2>/dev/null | grep opus-at-home
 
 set -e
-export FAKE_CLAUDE_STATE="$RUNNER_TEMP/fake-claude"
+export FAKE_CLAUDE_STATE="$data/ci-claude"
 mkdir -p "$FAKE_CLAUDE_STATE"
 npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/opus-claude-cli" @anthropic-ai/claude-code
 export PATH="$RUNNER_TEMP/opus-claude-cli/node_modules/.bin:$PATH"
@@ -76,8 +76,16 @@ grep -F 'Claude Code (Not signed in)' "$state/setup-prompt"
 if grep -E 'Codex|Docker|GitHub CLI' "$state/setup-prompt"; then exit 1; fi
 export PATH="/usr/local/bin:$PATH"
 sudo install -m 755 "$root/mac/ci/fake-claude" /usr/local/bin/claude
-start; menu 09-claude-setup; stop
-"$root/mac/dist/OPUS@Home.app/Contents/Resources/Setup.command"
+start
+menu 09-claude-setup
+osascript "$root/mac/ci/click-setup-button.applescript" "Copy setup prompt"
+test "$(pbpaste)" = "$(cat "$state/setup-prompt")"
+osascript "$root/mac/ci/click-setup-button.applescript" "Run setup…"
+for attempt in $(seq 1 60); do
+  test -f "$FAKE_CLAUDE_STATE/signed-in" && break
+  sleep 1
+done
+stop
 test -f "$FAKE_CLAUDE_STATE/signed-in"
 "$app" --setup-prompt | grep -F 'setup for Claude Code is complete'
 "$app" --run-once --agent claude --no-pr

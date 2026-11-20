@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-state=${FAKE_CLAUDE_STATE:?}
+state=${FAKE_CLAUDE_STATE:-"$HOME/Library/Application Support/OPUS@Home/ci-claude"}
 case "$1 $2" in
   "auth status")
     test "$3" = --json
