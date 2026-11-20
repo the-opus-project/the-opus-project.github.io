@@ -9,6 +9,8 @@ app="../dist/OPUS@Home.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS"
 cp "$bin" "$app/Contents/MacOS/OPUSAtHome"
+mkdir -p "$app/Contents/Resources"
+cp Resources/Setup.command "$app/Contents/Resources/"
 sed -e "s/__VERSION__/$version/" -e "s/__BUILD__/$build/" Resources/Info.plist > "$app/Contents/Info.plist"
 cd ../dist
 rm -f OPUS-at-Home.zip

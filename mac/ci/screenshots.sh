@@ -12,12 +12,13 @@ export FAKE_CODEX_STATE="$state"
 pid=""
 
 start() { "$app" & pid=$!; sleep "${1:-12}"; }
-stop() { kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; sleep 2; }
+stop() { kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null || true; sleep 2; }
 shot() { screencapture -x "$out/$1.png"; echo "saved $1.png"; }
 menu() {
   osascript -e 'tell application "System Events" to tell process "OPUSAtHome" to click menu bar item 1 of menu bar 2' >/dev/null 2>&1
   sleep 3
   shot "$1"
+  if [ "${2:-}" = keep-open ]; then return; fi
   osascript -e 'tell application "System Events" to tell process "OPUSAtHome" to click menu bar item 1 of menu bar 2' >/dev/null 2>&1
   sleep 1
 }
@@ -63,3 +64,37 @@ echo "--- fake codex log"; cat "$state/exec.log" 2>/dev/null
 echo "--- work folder"; ls -la "$data/work" 2>/dev/null
 echo "--- history"; cat "$data/history.json" 2>/dev/null
 echo "--- latest run log"; cat "$(ls -t "$data"/logs/*.log 2>/dev/null | head -1)" 2>/dev/null | grep opus-at-home
+
+set -e
+export FAKE_CLAUDE_STATE="$data/ci-claude"
+mkdir -p "$FAKE_CLAUDE_STATE"
+npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/opus-claude-cli" @anthropic-ai/claude-code
+export PATH="$RUNNER_TEMP/opus-claude-cli/node_modules/.bin:$PATH"
+claude --version
+prefs '{"agent":"claude","openPullRequests":false}'
+"$app" --setup-prompt > "$state/setup-prompt"
+grep -F 'Claude Code (Not signed in)' "$state/setup-prompt"
+if grep -E 'Codex|Docker|GitHub CLI' "$state/setup-prompt"; then exit 1; fi
+export PATH="/usr/local/bin:$PATH"
+sudo install -m 755 "$root/mac/ci/fake-claude" /usr/local/bin/claude
+start
+menu 09-claude-setup keep-open
+click="$RUNNER_TEMP/click-setup-button"
+swiftc -O -o "$click" "$root/mac/ci/click-setup-button.swift"
+"$click" "$out/09-claude-setup.png" "Copy setup prompt"
+pbpaste > "$state/copied-prompt"
+test "$(cat "$state/copied-prompt")" = "$(cat "$state/setup-prompt")" || { diff -u "$state/setup-prompt" "$state/copied-prompt"; exit 1; }
+screencapture -x "$state/after-copy.png"
+"$click" "$state/after-copy.png" "Run setup"
+for attempt in $(seq 1 60); do
+  test -f "$FAKE_CLAUDE_STATE/signed-in" && break
+  sleep 1
+done
+stop
+test -f "$FAKE_CLAUDE_STATE/signed-in"
+"$app" --setup-prompt | grep -F 'setup for Claude Code is complete'
+"$app" --run-once --agent claude --no-pr
+grep -Fx "$data/work" "$FAKE_CLAUDE_STATE/work-path"
+git -C "$data/repo" show HEAD:pieces/opus-ci-test/attempts/01.ly | grep -F "{ c'1 }"
+grep -F 'Committed locally' "$data/history.json"
+settings_shots 10-claude-ready

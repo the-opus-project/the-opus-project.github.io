@@ -15,6 +15,7 @@ final class Controller: ObservableObject {
             store.save(settings)
             if settings.agent != oldValue.agent || settings.openPullRequests != oldValue.openPullRequests {
                 usage = nil
+                usageError = nil
                 usageCheckedAt = nil
                 refreshPrerequisites()
             }
@@ -40,10 +41,14 @@ final class Controller: ObservableObject {
     private var timer: Timer?
     private let sleepAssertion = SleepAssertion()
     private var checkingPrereqs = false
+    private var refreshPending = false
 
     init() {
         settings = store.loadSettings()
         history = store.loadHistory()
+        DistributedNotificationCenter.default().addObserver(forName: CLI.setupFinished, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.refreshPrerequisites() }
+        }
         refreshPrerequisites()
         Power.observeChanges { [weak self] in
             Task { @MainActor in self?.powerChanged() }
@@ -62,16 +67,22 @@ final class Controller: ObservableObject {
     }
 
     func refreshPrerequisites() {
-        guard !checkingPrereqs else { return }
+        prerequisites = []
+        guard !checkingPrereqs else { refreshPending = true; return }
         checkingPrereqs = true
         let s = settings
         Task.detached {
             let tools = ToolEnvironment()
             let list = Prerequisites.check(s, tools: tools)
             await MainActor.run {
+                self.checkingPrereqs = false
+                if self.refreshPending {
+                    self.refreshPending = false
+                    self.refreshPrerequisites()
+                    return
+                }
                 self.tools = tools
                 self.prerequisites = list
-                self.checkingPrereqs = false
                 self.evaluate()
             }
         }
@@ -110,12 +121,12 @@ final class Controller: ObservableObject {
             status = gate.reason
             return
         }
-        if usageCheckedAt == nil || Date().timeIntervalSince(usageCheckedAt!) > 600 {
-            refreshUsage(thenEvaluate: true)
+        if checkingUsage {
             status = "Checking \(settings.agent.displayName) usage..."
             return
         }
-        if checkingUsage {
+        if usageCheckedAt == nil || Date().timeIntervalSince(usageCheckedAt!) > 600 {
+            refreshUsage(thenEvaluate: true)
             status = "Checking \(settings.agent.displayName) usage..."
             return
         }
@@ -132,9 +143,10 @@ final class Controller: ObservableObject {
         Task.detached {
             let (u, err) = UsageReader.read(agent, tools: tools)
             await MainActor.run {
+                self.checkingUsage = false
+                guard self.settings.agent == agent else { self.evaluate(); return }
                 self.usage = u
                 self.usageError = err
-                self.checkingUsage = false
                 if self.running, let reason = Policy.stopReason(self.settings, u) {
                     self.runStatus = "\(reason); stopping"
                     self.status = "Running: \(self.runStatus)"

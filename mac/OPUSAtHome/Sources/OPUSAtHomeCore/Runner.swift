@@ -8,7 +8,7 @@ public struct Prerequisite: Identifiable {
     public var ok: Bool
     public var required: Bool
     public var detail: String
-    public var fix: String?
+    public var setup: [SetupStep]
 }
 
 public enum Prerequisites {
@@ -17,32 +17,35 @@ public enum Prerequisites {
         let git = tools.run("git", ["--version"], timeout: 20)
         list.append(Prerequisite(name: "Git", ok: git.ok, required: true,
                                  detail: git.ok ? git.stdout.trimmingCharacters(in: .whitespacesAndNewlines) : "Not installed",
-                                 fix: "xcode-select --install"))
+                                 setup: [.developerTools]))
         let py = tools.run("python3", ["-c", "import sys; print(sys.version.split()[0])"], timeout: 20)
         list.append(Prerequisite(name: "Python 3", ok: py.ok, required: true,
                                  detail: py.ok ? "Python \(py.stdout.trimmingCharacters(in: .whitespacesAndNewlines))" : "Not installed",
-                                 fix: "xcode-select --install"))
+                                 setup: [.developerTools]))
         if tools.find("gh") == nil {
             list.append(Prerequisite(name: "GitHub CLI", ok: false, required: settings.openPullRequests,
-                                     detail: "Not installed", fix: "brew install gh && gh auth login"))
+                                     detail: "Not installed", setup: [.githubCLI, .githubLogin]))
         } else {
             let auth = tools.run("gh", ["api", "user", "--jq", ".login"], timeout: 30)
             list.append(Prerequisite(name: "GitHub CLI", ok: auth.ok, required: settings.openPullRequests,
                                      detail: auth.ok ? "Signed in as @\(auth.stdout.trimmingCharacters(in: .whitespacesAndNewlines))" : "Not signed in",
-                                     fix: "gh auth login"))
+                                     setup: [.githubLogin]))
         }
         let agentPath = tools.find(settings.agent.executableName)
-        list.append(Prerequisite(name: settings.agent.displayName, ok: agentPath != nil, required: true,
-                                 detail: agentPath ?? "Not installed",
-                                 fix: settings.agent == .codex ? "brew install --cask codex && codex login" : "curl -fsSL https://claude.ai/install.sh | bash && claude"))
+        let signedIn = agentPath != nil && settings.agent.isSignedIn(tools)
+        let install: SetupStep = settings.agent == .claude ? .claude : .codex
+        let login: SetupStep = settings.agent == .claude ? .claudeLogin : .codexLogin
+        list.append(Prerequisite(name: settings.agent.displayName, ok: signedIn, required: true,
+                                 detail: signedIn ? "Signed in" : (agentPath == nil ? "Not installed" : "Not signed in"),
+                                 setup: agentPath == nil ? [install, login] : [login]))
         let ly = tools.run("lilypond", ["--version"], timeout: 30)
         list.append(Prerequisite(name: "LilyPond", ok: ly.ok, required: true,
                                  detail: ly.ok ? (ly.stdout.split(separator: "\n").first.map(String.init) ?? "installed") : "Not installed",
-                                 fix: "brew install lilypond"))
+                                 setup: [.lilypond]))
         let docker = tools.run("docker", ["info", "--format", "{{.ServerVersion}}"], timeout: 20)
         list.append(Prerequisite(name: "Docker (optional)", ok: docker.ok, required: false,
                                  detail: docker.ok ? "Running" : "Not running; the repository check runs on GitHub instead",
-                                 fix: nil))
+                                 setup: []))
         return list
     }
 }
@@ -115,6 +118,10 @@ public final class ContributionRunner {
             }
             if timedOut { say("Time limit reached") }
             say("\(settings.agent.displayName) exited with status \(status)")
+            if status != 0, !timedOut {
+                try resetRepo()
+                throw RunError("\(settings.agent.displayName) exited with status \(status). Open the log for details.")
+            }
             let result = try finish()
             record.outcome = result.outcome
             record.title = result.title

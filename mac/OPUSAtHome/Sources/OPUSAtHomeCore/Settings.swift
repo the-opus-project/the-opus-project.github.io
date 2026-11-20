@@ -39,6 +39,16 @@ public struct AppSettings: Codable, Equatable {
     public var enabled = false
     public var agent: AgentKind = .codex
     public var model = ""
+    private var otherAgentModel = ""
+
+    public mutating func switchAgent(to newAgent: AgentKind) {
+        guard agent != newAgent else { return }
+        let previousModel = model
+        model = otherAgentModel
+        otherAgentModel = previousModel
+        agent = newAgent
+    }
+
     public var requireCharging = true
     public var idleMinutes = 0
     public var quotaMode: QuotaMode = .leftover
@@ -56,6 +66,7 @@ public struct AppSettings: Codable, Equatable {
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? d.enabled
         agent = try c.decodeIfPresent(AgentKind.self, forKey: .agent) ?? d.agent
         model = try c.decodeIfPresent(String.self, forKey: .model) ?? d.model
+        otherAgentModel = try c.decodeIfPresent(String.self, forKey: .otherAgentModel) ?? ""
         requireCharging = try c.decodeIfPresent(Bool.self, forKey: .requireCharging) ?? d.requireCharging
         idleMinutes = try c.decodeIfPresent(Int.self, forKey: .idleMinutes) ?? d.idleMinutes
         quotaMode = try c.decodeIfPresent(QuotaMode.self, forKey: .quotaMode) ?? d.quotaMode
