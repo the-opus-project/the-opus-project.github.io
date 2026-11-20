@@ -118,6 +118,10 @@ public final class ContributionRunner {
             }
             if timedOut { say("Time limit reached") }
             say("\(settings.agent.displayName) exited with status \(status)")
+            if status != 0, !timedOut {
+                try resetRepo()
+                throw RunError("\(settings.agent.displayName) exited with status \(status). Open the log for details.")
+            }
             let result = try finish()
             record.outcome = result.outcome
             record.title = result.title

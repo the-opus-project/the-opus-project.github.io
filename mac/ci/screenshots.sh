@@ -81,5 +81,7 @@ start; menu 09-claude-setup; stop
 test -f "$FAKE_CLAUDE_STATE/signed-in"
 "$app" --setup-prompt | grep -F 'setup for Claude Code is complete'
 "$app" --run-once --agent claude --no-pr
-grep -Fx 'Claude contribution invoked' "$data/work/claude-test.txt"
+grep -Fx "$data/work" "$FAKE_CLAUDE_STATE/work-path"
+git -C "$data/repo" show HEAD:pieces/opus-ci-test/attempts/01.ly | grep -F "{ c'1 }"
+grep -F 'Committed locally' "$data/history.json"
 settings_shots 10-claude-ready

@@ -6,7 +6,7 @@ enum CLI {
         guard let cmd = args.first, cmd.hasPrefix("--"), !cmd.hasPrefix("-NS"), !cmd.hasPrefix("-Apple") else { return nil }
         let store = DataStore()
         var settings = store.loadSettings()
-        if let i = args.firstIndex(of: "--agent"), i + 1 < args.count, let a = AgentKind(rawValue: args[i + 1]) { settings.agent = a }
+        if let i = args.firstIndex(of: "--agent"), i + 1 < args.count, let a = AgentKind(rawValue: args[i + 1]) { settings.switchAgent(to: a) }
         if let i = args.firstIndex(of: "--model"), i + 1 < args.count { settings.model = args[i + 1] }
         if let i = args.firstIndex(of: "--minutes"), i + 1 < args.count, let m = Int(args[i + 1]) { settings.maxRunMinutes = m }
         let tools = ToolEnvironment(preferProcessPath: true)
