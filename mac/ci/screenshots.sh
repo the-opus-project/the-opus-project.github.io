@@ -18,6 +18,7 @@ menu() {
   osascript -e 'tell application "System Events" to tell process "OPUSAtHome" to click menu bar item 1 of menu bar 2' >/dev/null 2>&1
   sleep 3
   shot "$1"
+  if [ "${2:-}" = keep-open ]; then return; fi
   osascript -e 'tell application "System Events" to tell process "OPUSAtHome" to click menu bar item 1 of menu bar 2' >/dev/null 2>&1
   sleep 1
 }
@@ -77,10 +78,10 @@ if grep -E 'Codex|Docker|GitHub CLI' "$state/setup-prompt"; then exit 1; fi
 export PATH="/usr/local/bin:$PATH"
 sudo install -m 755 "$root/mac/ci/fake-claude" /usr/local/bin/claude
 start
-menu 09-claude-setup
-osascript "$root/mac/ci/click-setup-button.applescript" "Copy setup prompt"
+menu 09-claude-setup keep-open
+osascript -l JavaScript "$root/mac/ci/click-setup-button.js" "Copy setup prompt"
 test "$(pbpaste)" = "$(cat "$state/setup-prompt")"
-osascript "$root/mac/ci/click-setup-button.applescript" "Run setup…"
+osascript -l JavaScript "$root/mac/ci/click-setup-button.js" "Run setup…"
 for attempt in $(seq 1 60); do
   test -f "$FAKE_CLAUDE_STATE/signed-in" && break
   sleep 1
