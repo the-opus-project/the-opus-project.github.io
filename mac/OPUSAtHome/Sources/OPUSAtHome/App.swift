@@ -74,19 +74,8 @@ struct MenuContent: View {
             if !c.missingRequired.isEmpty {
                 Divider()
                 Text("Setup needed").font(.subheadline.bold())
-                ForEach(c.missingRequired) { p in
-                    HStack {
-                        Text("\(p.name): \(p.detail)").font(.caption)
-                        Spacer()
-                        if let fix = p.fix {
-                            Button("Copy command") {
-                                NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(fix, forType: .string)
-                            }.controlSize(.small)
-                        }
-                    }
-                }
-                Button("Check again") { c.refreshPrerequisites() }.controlSize(.small)
+                Text(c.missingRequired.map(\.name).joined(separator: ", ")).font(.caption)
+                SetupActions()
             }
 
             Divider()
@@ -94,7 +83,7 @@ struct MenuContent: View {
                 if c.running {
                     Button("Stop this run") { c.stopRun() }
                 } else {
-                    Button("Run one now") { c.runNow() }.disabled(!c.missingRequired.isEmpty)
+                    Button("Run one now") { c.runNow() }.disabled(c.prerequisites.isEmpty || !c.missingRequired.isEmpty)
                 }
                 Spacer()
                 Button("Folder") { c.openFolder() }
@@ -136,13 +125,51 @@ struct MenuContent: View {
     }
 }
 
+struct SetupActions: View {
+    @EnvironmentObject var c: Controller
+    @State private var message: String?
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                if !c.missingRequired.isEmpty {
+                    Button("Run setup…") {
+                        guard let url = Bundle.main.url(forResource: "Setup", withExtension: "command"),
+                              NSWorkspace.shared.open(url) else {
+                            message = "Couldn’t open setup. Copy the prompt to continue."
+                            return
+                        }
+                        message = "Continue in Terminal."
+                    }
+                    Button("Copy setup prompt") {
+                        let plan = SetupPlan(c.prerequisites, hasBrew: c.tools.find("brew") != nil)
+                        let prompt = plan.prompt(agent: c.settings.agent, executable: Bundle.main.executablePath ?? CommandLine.arguments[0])
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(prompt, forType: .string)
+                        message = "Copied. Paste into your coding agent."
+                    }
+                }
+                Button("Check again") { message = nil; c.refreshPrerequisites() }
+            }
+            .controlSize(.small)
+            if let message, !c.missingRequired.isEmpty { Text(message).font(.caption) }
+        }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var c: Controller
 
     var body: some View {
         Form {
             Section("Agent") {
-                Picker("Run with", selection: $c.settings.agent) {
+                Picker("Run with", selection: Binding(get: { c.settings.agent }, set: { agent in
+                    guard agent != c.settings.agent else { return }
+                    var settings = c.settings
+                    settings.agent = agent
+                    settings.model = ""
+                    c.settings = settings
+                })) {
                     ForEach(AgentKind.allCases) { Text($0.displayName).tag($0) }
                 }
                 TextField("Model", text: $c.settings.model, prompt: Text("Agent default"))
@@ -181,7 +208,7 @@ struct SettingsView: View {
                         Text(p.detail).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                     }.font(.caption)
                 }
-                Button("Check again") { c.refreshPrerequisites() }
+                SetupActions()
             }
         }
         .formStyle(.grouped)

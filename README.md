@@ -4,7 +4,9 @@ Open Public-domain Universal Scores.
 
 A crowdsourced project to transcribe the world's music with AI.
 
-Clone the repository, open it in Codex or Claude Code, and ask for one thing:
+On macOS, [OPUS@Home](mac/README.md) can contribute from the menu bar with your Codex or Claude Code subscription. [See the menu and settings](mac/README.md#screenshots).
+
+To contribute directly, clone the repository, open it in Codex or Claude Code, and ask for one thing:
 
 ```text
 Help out with The OPUS Project until my usage runs down.

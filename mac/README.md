@@ -12,14 +12,23 @@ OPUS@Home is a menu bar app that contributes to The OPUS Project with your own C
 
    This downloads the [latest build](https://github.com/the-opus-project/the-opus-project.github.io/releases/tag/opus-at-home-latest), puts **OPUS@Home** in Applications and opens it. Run it again to update.
 2. Or install by hand: download `OPUS-at-Home.zip` from the latest build, unzip it and move **OPUS@Home** to Applications. The app is not notarized yet, so macOS blocks the first launch of a browser download. Open **System Settings > Privacy & Security** and click **Open Anyway**.
-3. Click the music note in the menu bar. Under **Setup needed**, copy and run each command it lists:
-   - Git and Python: `xcode-select --install`
-   - GitHub CLI: `brew install gh && gh auth login`
-   - Codex (`brew install --cask codex && codex login`) or Claude Code (`curl -fsSL https://claude.ai/install.sh | bash`, then run `claude` once to sign in)
-   - LilyPond: `brew install lilypond`
-4. Switch it on.
+3. Click the music note in the menu bar. In **Settings → Agent**, choose **Codex** or **Claude Code**.
+4. Under **Setup needed**, choose **Run setup…** to install missing tools in Terminal, or **Copy setup prompt** to give the whole task to a local coding agent. Both use the same checks. Setup guides you through the selected agent’s sign-in and requests GitHub sign-in when pull requests are enabled. Complete any browser sign-in or macOS installer dialog that opens.
+5. When setup passes, switch OPUS@Home on in the menu.
 
 macOS 14 or later is required.
+
+## Screenshots
+
+These screenshots were captured on a macOS runner with simulated agent sign-in and usage.
+
+| Menu bar | Settings |
+| --- | --- |
+| [First launch](screenshots/01-menu-first-launch.png) | [First launch](screenshots/02-settings-first-launch-top.png) · [Setup checks](screenshots/02-settings-first-launch-bottom.png) |
+| [Saving weekly quota](screenshots/03-menu-saving-quota.png) | [Ready](screenshots/04-settings-ready-top.png) · [Tools](screenshots/04-settings-ready-bottom.png) |
+| [Too close to reset](screenshots/05-menu-reset-too-close.png) | [Weekly cap](screenshots/08-settings-anytime-top.png) · [Tools](screenshots/08-settings-anytime-bottom.png) |
+| [Running](screenshots/06-menu-running.png) · [After a run](screenshots/07-menu-after-run.png) | [Claude Code](screenshots/10-claude-ready-top.png) · [Tools](screenshots/10-claude-ready-bottom.png) |
+| [Claude Code setup](screenshots/09-claude-setup.png) | |
 
 ## When it runs
 
@@ -52,6 +61,8 @@ The **Log** button opens the latest run's full transcript. Recent runs and their
 The app binary also works from Terminal, which is useful for testing:
 
 ```sh
+"/Applications/OPUS@Home.app/Contents/MacOS/OPUSAtHome" --setup-prompt --agent claude
+"/Applications/OPUS@Home.app/Contents/MacOS/OPUSAtHome" --setup --agent claude
 "/Applications/OPUS@Home.app/Contents/MacOS/OPUSAtHome" --status
 "/Applications/OPUS@Home.app/Contents/MacOS/OPUSAtHome" --run-once --no-pr --agent codex
 ```
